@@ -1,0 +1,21 @@
+{
+  "name": "聊天方法论 · 模拟对话训练台",
+  "short_name": "聊天训练台",
+  "description": "填入真实聊天记录，判定兴趣指标，生成带原理说明的回复方案",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#002860",
+  "theme_color": "#002860",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "新建对话记录", "url": "./index.html#sec-chat", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "红线自查", "url": "./index.html#sec-lint", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

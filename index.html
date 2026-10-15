@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>聊天方法论 · 模拟对话训练台</title>
+<meta name="theme-color" content="#002860">
+<meta name="description" content="聊天方法论训练台：填入真实聊天记录，判定兴趣指标，生成带原理的回复方案">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="聊天训练台">
+<link rel="apple-touch-startup-image" href="icons/splash-1170x2532.png">
+<style>
+:root{
+  --navy:#002860; --navy-l:#0a3a80; --green:#78B040; --green-l:#eaf3de;
+  --ink:#1f2328; --ink2:#5b6570; --ink3:#8b95a1;
+  --line:#e3e7ec; --line2:#d0d6dd; --bg:#f4f6f9; --card:#ffffff;
+  --ok:#1a7f4b; --ok-bg:#e8f5ee; --warn:#9a6700; --warn-bg:#fdf3d9;
+  --bad:#b42318; --bad-bg:#fdecea; --info-bg:#e8f0fb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft YaHei","微软雅黑",-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1440px;margin:0 auto;padding:0 24px 60px}
+
+header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-l) 100%);color:#fff;padding:26px 0 22px;margin-bottom:22px}
+header .wrap{padding-bottom:0}
+header h1{font-size:22px;font-weight:600;letter-spacing:.5px;display:flex;align-items:center;gap:12px}
+header h1 .badge{background:var(--green);color:#fff;font-size:12px;font-weight:500;padding:3px 10px;border-radius:11px;letter-spacing:0}
+header p{color:#b9c8de;font-size:13px;margin-top:6px}
+
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 16px;margin-bottom:18px}
+.card h2{font-size:15px;font-weight:600;color:var(--navy);padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.card h2 .hint{font-size:12px;font-weight:400;color:var(--ink3)}
+
+label.f{display:block;font-size:12px;color:var(--ink2);margin:12px 0 5px;font-weight:600;letter-spacing:.3px}
+label.f:first-of-type{margin-top:0}
+select,textarea,input{width:100%;font-family:inherit;font-size:13px;color:var(--ink);background:#fbfcfd;border:1px solid var(--line2);border-radius:6px;padding:8px 10px;outline:none}
+select:focus,textarea:focus,input:focus{border-color:var(--navy-l);background:#fff;box-shadow:0 0 0 3px rgba(0,40,96,.07)}
+textarea{resize:vertical;line-height:1.7}
+.radios{display:flex;flex-wrap:wrap;gap:6px}
+.radios label{display:inline-flex;align-items:center;gap:5px;background:#fbfcfd;border:1px solid var(--line2);border-radius:16px;padding:5px 11px;font-size:12.5px;cursor:pointer;transition:.15s}
+.radios label:hover{border-color:var(--navy-l)}
+.radios input{display:none}
+.radios input:checked+span{color:#fff}
+.radios label:has(input:checked){background:var(--navy);border-color:var(--navy);color:#fff}
+
+button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;font-size:13.5px;transition:.15s}
+.btn-main{width:100%;background:var(--green);color:#fff;padding:13px;font-size:15px;font-weight:600;letter-spacing:1px}
+.btn-main:hover{background:#689c36}
+.btn-sub{background:#fff;color:var(--navy);border:1px solid var(--line2);padding:6px 12px;font-size:12.5px}
+.btn-sub:hover{border-color:var(--navy);background:var(--info-bg)}
+
+.steps{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px}
+.step{flex:1;min-width:62px;text-align:center;background:#fbfcfd;border:1px solid var(--line2);border-radius:7px;padding:8px 4px;cursor:pointer;font-size:12px;line-height:1.35;color:var(--ink2);transition:.15s}
+.step b{display:block;font-size:11px;color:var(--ink3);font-weight:600}
+.step:hover{border-color:var(--navy-l)}
+.step.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.step.on b{color:var(--green)}
+
+.reps{display:flex;flex-direction:column;gap:11px}
+.rep{border:1px solid var(--line);border-left:3px solid var(--green);border-radius:7px;padding:11px 13px;background:#fcfdfd}
+.rep .txt{font-size:14.5px;line-height:1.7;color:var(--ink)}
+.rep .why{font-size:12px;color:var(--ink3);margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+.rep .why b{color:var(--navy);font-weight:600}
+.rep .act{float:right;background:transparent;color:var(--ink3);font-size:12px;padding:1px 7px}
+.rep .act:hover{color:var(--green)}
+
+.note{border-radius:7px;padding:11px 13px;font-size:13px;margin-bottom:11px;line-height:1.65}
+.note b{font-weight:600}
+.note.ok{background:var(--ok-bg);border:1px solid #b8e0c9;color:#0f5c37}
+.note.warn{background:var(--warn-bg);border:1px solid #f0d99a;color:#6b4b00}
+.note.bad{background:var(--bad-bg);border:1px solid #f5c2bc;color:#8a1c14}
+.note.info{background:var(--info-bg);border:1px solid #c2d6f2;color:#123a6b}
+.note ul{margin:6px 0 0 18px}
+.note li{margin:3px 0}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f7f9fb;font-size:12px;color:var(--ink2);font-weight:600;white-space:nowrap}
+td.bad{color:var(--bad)} td.ok{color:var(--ok)}
+
+.meter{display:flex;gap:4px;margin:9px 0 4px}
+.meter div{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.meter div.on{background:var(--green)}
+.meter div.cur{background:var(--navy)}
+
+.tbl-wrap{overflow-x:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:#f2f5f9;border:1px solid var(--line);border-radius:5px;padding:3px 9px;font-size:12.5px;cursor:pointer;color:var(--navy)}
+.chip:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sec-t{font-size:13px;font-weight:600;color:var(--navy);margin:16px 0 8px;padding-left:8px;border-left:3px solid var(--green)}
+.hidden{display:none}
+footer{text-align:center;color:var(--ink3);font-size:12px;padding:20px 0}
+
+/* ============ PWA / 移动端 ============ */
+header{padding-top:calc(20px + env(safe-area-inset-top))}
+@media (max-width:900px){
+  .wrap{padding:0 14px 96px}
+  .grid{grid-template-columns:1fr;gap:0}
+  header{padding:calc(18px + env(safe-area-inset-top)) 0 16px}
+  header h1{font-size:18px}
+  header p{font-size:12px}
+  .card{padding:15px 14px 13px;border-radius:12px;margin-bottom:14px}
+  .card h2{font-size:14.5px}
+  select,textarea,input{font-size:16px;padding:10px 12px}
+  .radios label{font-size:13px;padding:7px 12px}
+  .btn-main{font-size:16px;padding:14px}
+  .step{min-width:56px;font-size:11px;padding:7px 3px}
+  .rep .txt{font-size:15.5px}
+  table{font-size:12.5px}
+  th,td{padding:7px 6px}
+}
+.nav{display:none}
+@media (max-width:900px){
+  .nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:99;
+    background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+  .nav button{flex:1;background:transparent;color:var(--ink3);font-size:10.5px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;border-radius:8px}
+  .nav button .ic{width:20px;height:20px;border-radius:5px;background:var(--line2)}
+  .nav button.on{color:var(--navy);font-weight:600}
+  .nav button.on .ic{background:var(--navy)}
+  footer{padding-bottom:10px}
+  body{overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
+  input[type=range]{height:34px}
+  .meter div{height:8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>聊天方法论 · 模拟对话训练台 <span class="badge">190张截图提炼</span></h1>
+    <p>填入真实聊天记录 + 目标画像 → 判定所处步骤与兴趣指标 → 产出可直接发送的回复及原理说明</p>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="grid">
+
+<!-- 左栏 -->
+<div>
+  <div class="card" id="sec-profile">
+    <h2>① 目标对象画像</h2>
+
+    <label class="f">属性判断</label>
+    <select id="attr">
+      <option value="unknown">未判断 — 先辨属性再谈其他</option>
+      <option value="cd">CD 女 / 投资者（长期属性）</option>
+      <option value="ab">AB 女 / 测试者（短期属性）</option>
+    </select>
+
+    <label class="f">需求排序（勾选你认为她最缺的，从左到右优先级递减）</label>
+    <div class="radios" id="need">
+      <label><input type="checkbox" value="情感"><span>情感</span></label>
+      <label><input type="checkbox" value="物质"><span>物质</span></label>
+      <label><input type="checkbox" value="生理"><span>生理</span></label>
+    </div>
+
+    <label class="f">你目前展示的是</label>
+    <div class="radios" id="vtype">
+      <label><input type="radio" name="vt" value="长期" checked><span>长期价值（不变的）</span></label>
+      <label><input type="radio" name="vt" value="短期"><span>短期价值（易变的）</span></label>
+    </div>
+
+    <label class="f">她的兴趣指标（可由下方记录自动判定）</label>
+    <div class="radios" id="iit">
+      <label><input type="radio" name="ii" value="0" checked><span>无</span></label>
+      <label><input type="radio" name="ii" value="1"><span>初级</span></label>
+      <label><input type="radio" name="ii" value="2"><span>中级</span></label>
+      <label><input type="radio" name="ii" value="3"><span>高级</span></label>
+    </div>
+    <div class="meter" id="meter"><div></div><div></div><div></div><div></div></div>
+    <div style="font-size:11.5px;color:var(--ink3)" id="meterTxt">兴趣动能：无 · 只答不接</div>
+  </div>
+
+  <div class="card" id="sec-step">
+    <h2>② 当前所处步骤</h2>
+    <div class="steps" id="steps"></div>
+    <div class="note info" id="stepBrief" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card" id="sec-diag">
+    <h2>③ 诊断结论</h2>
+    <div id="diag"><div class="note info">填入聊天记录后点击「生成回复」，这里会给出需求×价值匹配度、步骤推进建议与红线预警。</div></div>
+  </div>
+</div>
+
+<!-- 右栏 -->
+<div>
+  <div class="card" id="sec-chat">
+    <h2>④ 真实聊天记录 <span class="hint">格式：我: xxx ／ 她: xxx，一行一条</span></h2>
+    <textarea id="chat" rows="9" placeholder="我: 也喜欢旅行啊，你都去过哪些地方？
+她: 我去过云南洱海，还挺漂亮的
+她: 你呢"></textarea>
+    <div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn-main" id="go" style="flex:1;min-width:160px">生成回复方案</button>
+      <button class="btn-sub" id="cl">清空</button>
+      <button class="btn-sub" id="ex">载入示例</button>
+      <button class="btn-sub" id="cp">复制全部</button>
+      <button class="btn-sub" id="how">怎么用</button>
+    </div>
+    <div id="howBox" class="hidden"></div>
+  </div>
+
+  <div class="card" id="sec-out">
+    <h2>⑤ 推荐回复 <span class="hint">按当前步骤 × 属性 × 兴趣指标匹配</span></h2>
+    <div id="out"><div class="note info">等待生成。规则来自课程原话术体系，含原理说明与红线对比。</div></div>
+  </div>
+
+  <div class="card" id="sec-kw">
+    <h2>⑥ 关键词延伸法</h2>
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:8px">从她最后一句提取关键词，沿「关键词本身／我／时间线」三个方向延伸，专门解决"没话说"。</div>
+    <div id="kw"><div style="color:var(--ink3);font-size:13px">生成回复后自动填充。</div></div>
+  </div>
+
+  <div class="card" id="sec-fuzz">
+    <h2>⑦ 模糊测试台 <span class="hint">拖动滑块，隐藏"我"，可进可退</span></h2>
+    <input type="range" id="fuzz" min="1" max="4" value="1" style="width:100%;accent-color:var(--navy)">
+    <div id="fuzzOut" class="note info" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" id="sec-waste">
+    <h2>⑧ 废物测试应对表</h2>
+    <div class="tbl-wrap"><table id="waste"></table></div>
+  </div>
+
+  <div class="card" id="sec-lint">
+    <h2>⑨ 红线自查器</h2>
+    <textarea id="draft" rows="4" placeholder="把你打算发出去的话粘到这里，自动检查是否踩红线"></textarea>
+    <div id="lint" style="margin-top:10px"></div>
+  </div>
+</div>
+
+</div>
+
+<footer>方法论提炼自「魅男训练营 179 期」190 张课程截图 · 本工具为话术逻辑训练用，请结合真实沟通与对方意愿</footer>
+</div>
+
+<nav class="nav" id="nav">
+  <button data-t="sec-chat"><span class="ic"></span>对话</button>
+  <button data-t="sec-out"><span class="ic"></span>回复</button>
+  <button data-t="sec-step"><span class="ic"></span>步骤</button>
+  <button data-t="sec-profile"><span class="ic"></span>画像</button>
+  <button data-t="sec-lint"><span class="ic"></span>红线</button>
+</nav>
+
+<script>
+const HOW=[
+ ["第一步·先填对方的画像（左上角「①」）","判断她是什么属性：长期（CD）还是短期（AB），这一步决定后面所有话术走哪一版。勾选她的需求排序——物质／生理／情感，哪个排在前面，哪个就是她真正在意的。选「你目前展示的是」，如实选长期价值还是短期价值。"],
+ ["第二步·贴聊天记录","点「④ 真实聊天记录」，把你和她真实的对话粘进去，一行一条。格式：<br><code>我: 你好呀，最近在看什么<br>她: 在家追剧，你呢<br>她: 好久没人陪我聊了</code><br>只要她（对方）的发言，人会自己抓取最后一条来判断她的状态。"],
+ ["第三步·点「生成回复方案」","系统会做三件事：<br>· <b>判定她的兴趣指标</b>——只答不接=无动能，描述状态=初级，描述+解释=中级，描述+反问=高级<br>· <b>生成回复</b>——按你选的当前步骤和她的属性，给出 3-5 条，每条下面都写了原理<br>· <b>关键词延伸</b>——专门解决\"没话说\"，从她最后一句抓关键词，沿三个方向延伸"],
+ ["第四步·看清红线提醒","诊断区会拦你：兴趣指标没到中级就想升级关系，会红字警告「越级」；她是 AB 属性而你在展长期价值，会提示属性错配。发之前把草稿粘到「⑨ 红线自查器」，9 条规则实时扫一遍。"],
+ ["第五步·复制去发","每条回复右上角有「复制」按钮，点一下直接进剪贴板，粘到微信里就能发。"],
+ ["小技巧：先看步骤条的原理","顶部「② 当前所处步骤」那一条蓝色说明，写的是这一步到底在干什么。不确定该推进还是该退回时，点那一条蓝色框看原理，比看回复本身有用。"]
+];
+$("how").onclick=()=>{
+  const b=$("howBox");
+  if(!b.classList.contains("hidden")){b.classList.add("hidden");return;}
+  b.classList.remove("hidden");
+  b.innerHTML='<div class="note info" style="margin-top:14px"><b>五步用法</b></div>'+
+    HOW.map(h=>'<div class="note ok"><b>'+h[0]+'</b><br>'+h[1]+'</div>').join("");
+};
+</script>
+/* ============ 数据层：方法论规则库 ============ */
+const STEPS=[
+ {n:0,k:"收集资源",c:"① 展示面是唯一门槛：照片干净整洁、名字有话题性、资料里放长期价值元素。社交软件一律不付费——0-1 没解决，充会员解决不了 1-100。"},
+ {n:1,k:"开场",c:"② 开场本身没有意义，只是链接方式。不要先夸（舔狗行为），一开场就暴露需求感，后面基本没戏。四型：普通 hello／话题／评价／场景。开场后必须快速切话题。"},
+ {n:2,k:"分析需求",c:"③ 女生三大需求：物质、生理、情感。原理是「一个人最缺什么，他需要的就是什么」。需求有层次——她不缺钱时，你展示有钱完全没用，反而被当成傻逼。"},
+ {n:3,k:"植入价值",c:"④ 价值满足需求，但不要直接满足，让她知道你有满足的能力就行。方式一朋友圈展示，方式二聊天铺垫：先抛感觉（「感觉你还蛮喜欢旅行的」），对方接住后再展开。"},
+ {n:4,k:"话题延伸",c:"⑤ 解决没话说：从她回话里抓关键词组词延伸，三个方向——从关键词本身延伸、从「我」延伸、沿时间线延伸。"},
+ {n:5,k:"判断兴趣指标",c:"⑥ 通过文字判断好感度：无动能=只答不接；初级=简单描述状态；中级=描述状态同时在解释；高级=描述状态同时反问你。高级动能才允许升级关系。"},
+ {n:6,k:"模糊测试",c:"⑦ 用「感觉／假如」把话模糊化，把「我」藏起来，可进可退。目的不是表态，是测出她的好感度再决定是否推进。"},
+ {n:7,k:"破废物测试",c:"⑧ 女生验证你展示的价值是不是真的。不能说「我身边女生很多」（显得花心），也不能说「我没有异性朋友」（显得没价值）。长期女生往内在答，短期女生往标准答。"},
+ {n:8,k:"反转框架",c:"⑨ 破完测好感度飙升，此刻千万不要扑上去，要反向筛选。长期属性筛内在，短期属性筛身材。容易得到的东西不会被珍惜。"},
+ {n:9,k:"确定称呼",c:"⑩ 放水让女生来追你，然后交换称呼。关系浅叫「宝贝」，关系深叫「老公」——老公唯一性强，是长期属性的标志，也是后续铺垫。"},
+ {n:10,k:"释放张力·邀约",c:"⑪ 目的是把她的欲望勾出来，不是自己聊得硬邦邦。必须卡性窗口期（生理期前后各一次），聊到位不约＝给别人截胡。"}
+];
+
+const OPEN={
+ normal:{t:["嗨","hello"],w:"最稳的开场，不功不过，直接把球抛过去。"},
+ topic:{t:["看你朋友圈也常出去旅行，你都去过哪些地方？","你也喜欢健身啊，我最近在练，你练什么项目？","感觉你应该是喜欢看电影的人，最近在看什么？"],w:"话题开场：你提供一个话题让她接，比评价安全得多，不暴露需求感。"},
+ eval:{t:["大眼睛啊，感觉你应该是个可爱的姑娘","抓到一个可爱的姑娘"],w:"评价开场：针对外貌，但只夸客观特征、不夸性格，避免显得舔。"},
+ scene:{t:["探探你你喜欢我","牵手说你喜欢我"],w:"场景开场：借软件匹配机制开局，显得自然不刻意。"}
+};
+
+function needCheck(attr,needs,vt){
+  const out=[];
+  if(attr==="ab"&&vt==="长期") out.push({lv:"bad",t:"属性错配：她是 AB（短期/测试者），你在展长期价值。长期方式对待短期女生＝她认准你是提款机。要么改走短期价值（好玩、刺激、及时行乐），要么止损。长期女生反过来被当玩玩看，性质一样。"});
+  if(attr==="cd"&&vt==="短期") out.push({lv:"bad",t:"属性错配：她是 CD（长期/投资者），你在展短期价值（炫物质、一次打卡）。她对内在更感兴趣，你却在证明你有多少钱——她会觉得你轻浮。"});
+  if(needs.includes("物质")&&vt==="长期") out.push({lv:"warn",t:"她要物质，你展长期价值。注意：钱是给女生看的，不是给女生花的。花出去你就变成供养者框架了——正确做法是让她知道你有这个能力，别直接给。"});
+  if(needs.includes("物质")&&!needs.includes("情感")&&vt==="长期") out.push({lv:"warn",t:"风险案例：某老板在马来西亚开很多餐厅、非常有钱，却一直搞不定女大学生——人家不缺这一块。需求没对上，价值再高也是零。"});
+  if(!needs.length) out.push({lv:"warn",t:"还没勾需求。先判断她最缺什么——最缺的才是她在意的。缺钱的人和有钱的人，你给她看同一套东西，反应天差地别。"});
+  if(needs.includes("生理")&&attr!=="ab") out.push({lv:"warn",t:"生理需求排前但她是长期属性：别急着走短期路线。长期女生讲感情观，走错赛道会直接出局。"});
+  if(!out.length) out.push({lv:"ok",t:"需求与价值基本对得上，可以继续推进下一步。"});
+  return out;
+}
+
+/* 关键词提取 */
+const STOP=new Set("的了吗呢吧啊呀哦嗯我你他她它是在有和就都也很到要去会个这那什么怎么这样那样一个自己没有还想要被给对呀哈嘿呗啦嘛哦噢喔哎呦喂嗯嗯嗯真的挺蛮比较有点觉得知道现在时候已经可以一起这种那个什么我们他们你们她们");
+function keywords(t){
+  if(!t) return [];
+  const clean=t.replace(/[^一-龥A-Za-z0-9]/g," ");
+  const out=[],seen=new Set();
+  const seg=clean.split(/\s+/).filter(Boolean);
+  seg.forEach(w=>{
+    if(/^[A-Za-z0-9]+$/.test(w)){ if(w.length>=2&&!seen.has(w)){seen.add(w);out.push(w);} return; }
+    for(let len=4;len>=2;len--){
+      for(let i=0;i+len<=w.length;i++){
+        const s=w.substr(i,len);
+        if(STOP.has(s)||seen.has(s)) continue;
+        seen.add(s); out.push(s);
+      }
+    }
+  });
+  return out.filter(k=>!STOP.has(k)).slice(0,10);
+}
+
+/* 兴趣指标判定 */
+function judgeIIT(last){
+  if(!last) return {v:0,r:"没抓到她的回复，无法判定。"};
+  const t=last.trim();
+  const len=t.replace(/[^一-龥A-Za-z0-9]/g,"").length;
+  const hasQ=/[?？]$/.test(t)||/(吗|呢|吧|你|您)/.test(t);
+  const explain=/(因为|所以|今天|昨天|刚才|刚才|下午|晚上|上午|有点|稍微|最近)/.test(t);
+  const describe=len>=4&&!/^(嗯|哦|哈|好|好的|ok|OK|在吗|在|是的|不是|没有|有的)/.test(t);
+  if(len<=3&&!hasQ&&!describe) return {v:0,r:"「"+t+"」——只答不接，没有给出任何信息。这是无吸引动能，说明你上一步的话题她没接住。往回退一步，重新做话题延伸。"};
+  if(hasQ) return {v:3,r:"「"+t+"」——她反问了你，说明注意力已经转移过来。这是高级吸引动能，可以考虑进入升级关系。"};
+  if(explain) return {v:2,r:"「"+t+"」——她在描述状态的同时解释了原因，信息量加倍。这是中级吸引动能，值得继续加码话题延伸。"};
+  if(describe) return {v:1,r:"「"+t+"」——她给出了状态描述，但没反问你。这是初级吸引动能，保持话题延伸，不要急着推进关系。"};
+  return {v:0,r:"「"+t+"」——回应过于敷衍，基本没有吸引动能。"};
+}
+
+/* 各步骤回复生成 */
+function gen(step,attr,needs,kws,last,iit,vtype){
+  const K=kws, k=K[0]||"这件事", k2=K[1]||"你";
+  const S=[];
+  const short=attr==="ab";
+  switch(step){
+    case 0: S.push({t:"先把展示面补齐再谈聊天。照片干净整洁（不需要很帅，但一定要干净），别一脸痘痘就往上传；名字带话题性，比如「一只小龙虾」，女生会好奇主动来问你。",w:"0-1 靠展示面，付费只放大结果。资料里放长期价值内容（宠物、健身、做饭）。"});
+      S.push({t:"顶置一条动态，当你的介绍页，写清楚你的优势和目的。女生划到你的主页第一眼就看到它，来的都是真想聊的人。",w:"顶置动态=你的主页名片，能显著提升私信率。"}); break;
+    case 1: S.push(...OPEN.normal.t.map(t=>({t,w:OPEN.normal.w})));
+      S.push(...OPEN.topic.t.slice(0,2).map(t=>({t,w:OPEN.topic.w})));
+      S.push({t:"你发的这个"+k+"，我还挺有共鸣的，你平时都怎么安排？",w:"评价开场改造版：评价客观内容而非直接夸人，既不舔又能开启话题。"}); break;
+    case 2: S.push({t:"感觉你还蛮喜欢"+k+"的。",w:"铺垫句式核心：抛感觉，不给结论。她回「好吧」或追问的瞬间，你才展开展示价值——直接给就没有铺垫作用了。"});
+      S.push({t:short?"我挺会谈的，这种事我一般都能安排得挺舒服。":"我比较喜欢"+k+"，上次去了一趟，还顺手捡了点有意思的东西回来。",w:short?"短期女生吃短期价值：好玩、刺激、及时行乐。「会安排」比「有钱」有效得多。":"长期女生吃长期价值：稳定、热爱生活、有内在精神。用一次具体经历佐证。"});
+      S.push({t:"不过我发现"+k2+"挺有意思的，你是有备而来的吧？",w:"先给需求，再抛回问题——保持对话，不给她当复读机的机会。"}); break;
+    case 3: S.push({t:"那"+k+"你是怎么开始的？我有点好奇。",w:"关键词延伸：沿关键词本身延伸，追源头。"});
+      S.push({t:"我最近也打算"+k+"，不过一直没人一起。一个人做挺没劲的。",w:"从「我」延伸：铺垫同时埋下邀约的伏笔，为下一步铺路。"});
+      S.push({t:"这个季度"+k+"确实挺不错的，你打算什么时候再来一次？",w:"时间线延伸：把话题往未来推，天然创造下一次联系的接口。"}); break;
+    case 4: S.push({t:"我今天不太舒服，在家"+k+"。你呢？",w:"你自己示范一遍：描述状态 + 解释 + 反问 = 高级动能。对方照抄你的结构，回话质量会跟着涨。"});
+      S.push({t:"刚忙完，在"+k+"。你呢今天什么安排？",w:"描述状态 + 反问，不解释——看她是否愿意给你信息。"});
+      S.push({t:iit>=2?"感觉你最近状态不太一样，怎么了？":"感觉你最近挺松弛的，在忙什么？",w:"主动制造「她在解释」的场合，把无动能拉到中动能。"}); break;
+    case 5: S.push({t:"感觉你比较适合做媳妇儿。",w:"模糊测试第一级：最模糊，「感觉」把意图包起来，她可以当玩笑接，也可以认真接。"});
+      S.push({t:"你适合做媳妇。",w:"第二级：去掉「我」，隐藏自己，但判断更明确。"});
+      S.push({t:iit>=2?"你适合做我媳妇。":null,w:"第三级：只在你判定她是高级动能时用。「我」暴露部分需求感，可进可退。"});
+      S.push({t:"你这几天怎么老想起我来了？",w:"反问式模糊：把「我想你」换成「你怎么老想起我」，需求感归零，压力给回对方。"}); break;
+    case 6: S.push({t:short?"我身边的女生确实很多，但我觉得情感应该以合适为主，很难找到真正有感觉、三观接近的。":"我身边异性朋友不少，但都是一起做事的关系。真要找能走远的，我更看重感觉对不对——这个很难碰。",w:short?"短期女生问「会不会乱搞」时，往「标准」上答：不是没有，是很难遇到动心的。你标准高＝你有价值。":"长期女生问「会不会乱搞」时，往「内在」上答：强调以合适和三观为主。属性决定用哪一版，别混。"});
+      S.push({t:"我不是那种会乱来的人，但我也不想假装自己不社交。",w:"不否认也不炫耀，承认事实 + 定住态度，比任何一种极端说法都稳。"}); break;
+    case 7: S.push({t:short?"你平时都玩什么？我看看是不是跟我一个路子。":"你会做饭吗？我周末基本自己弄。",w:short?"短期属性筛身材／筛真实：轻松、直接、不装。":"长期属性筛内在：生活能力、性格、处事方式——问出来的答案决定你要不要继续投入。"});
+      S.push({t:"感觉你挺会谈恋爱的，不过我不太会配合这个节奏。",w:"反转框架：把筛选的姿态立起来。你不是随随便便一个女生都能得到的，你是有标准的男人。"}); break;
+    case 8: S.push({t:"叫我老公。",w:"称呼=关系定位器。叫「宝贝」是浅层，她可以叫很多人；叫「老公」唯一性强，只有长期属性女生才会接。"});
+      S.push({t:"那我以后就是你老公了，先适应一下。",w:"主动给出定位，她可以拒绝——比直接要求更可控，也避免暴露需求感。"}); break;
+    case 9: S.push({t:"（状态）今天刚好有空，出来喝一杯？我知道一家不错的店。",w:"邀约要短、要有具体动作和时间。「一起」本身不是目的，是转场节点。"});
+      S.push({t:"我这两天正好有空，你呢，有想出门的时候吗？",w:"给对方选，但把主动权留给她。窗口期在生理期前后，这两天最该出手。"});
+      S.push({t:"你今天放鸽子，那就改天对不对？那我约别人对不对？",w:"应对放鸽子的标准答案：让她感觉你无所谓。发生关系是对你的奖赏，不是你求着她。"}); break;
+    default: S.push({t:"把上面的流程走一遍就行。",w:""});
+  }
+  return S.filter(x=>x&&x.t);
+}
+
+/* ============ UI 逻辑 ============ */
+const $=id=>document.getElementById(id);
+let curStep=1, lastReps=[];
+
+$("steps").innerHTML=STEPS.map(s=>`<div class="step" data-n="${s.n}"><b>STEP${s.n}</b>${s.k}</div>`).join("");
+function paintStep(){
+  document.querySelectorAll(".step").forEach(e=>e.classList.toggle("on",+e.dataset.n===curStep));
+  $("stepBrief").innerHTML=`<b>STEP ${curStep}｜${STEPS[curStep].k}</b><br>${STEPS[curStep].c}`;
+}
+document.querySelectorAll(".step").forEach(e=>e.onclick=()=>{curStep=+e.dataset.n;paintStep();run();});
+paintStep();
+
+function parseChat(){
+  const raw=$("chat").value.trim(); if(!raw) return [];
+  return raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
+    let who="她",txt=l;
+    if(/^(我|me|Me|我方|自己)\s*[:：]\s*/.test(l)){who="我";txt=l.replace(/^(我|me|Me|我方|自己)\s*[:：]\s*/,"");}
+    else if(/^(她|他|对方|女生|妹子|ta|TA)\s*[:：]\s*/.test(l)){txt=l.replace(/^(她|他|对方|女生|妹子|ta|TA)\s*[:：]\s*/,"");}
+    else if(/^(你|you)\s*[:：]\s*/.test(l)){who="我";txt=l.replace(/^(你|you)\s*[:：]\s*/,"");}
+    return {who,txt};
+  });
+}
+
+function run(){
+  const log=parseChat();
+  const attr=$("attr").value;
+  const needs=[...document.querySelectorAll('#need input:checked')].map(x=>x.value);
+  const vt=document.querySelector('#vtype input:checked').value;
+  const her=log.filter(l=>l.who==="她");
+  const last=her.length?her[her.length-1].txt:"";
+  const K=keywords(last), k=K[0]||"那件事";
+  const iit=attr?{v:0,r:""}:null;
+
+  // 自动判定兴趣指标
+  if(her.length){
+    const j=judgeIIT(last);
+    document.querySelectorAll('#iit input').forEach(r=>r.checked=+r.value===j.v);
+    paintMeter(j.v,j.r);
+    document.getElementById("iitNote")||(()=>{})();
+    window.__iit=j;
+  } else { window.__iit={v:0,r:"没有她的回复，先别急着判断。"}; }
+  const iiv=window.__iit.v;
+
+  // 步骤推进建议
+  if(her.length===0){ curStep = curStep===0?1:curStep; }
+  else if(iiv<=1 && curStep>=8){ curStep=7; }
+  else if(iiv===0 && curStep>=5){ curStep=4; }
+  paintStep();
+
+  // 诊断
+  let d=`<div class="note ${her.length?window.__iit.v>=2?"ok":"warn":"info"}"><b>兴趣指标判定：</b>${window.__iit.r}</div>`;
+  if(!her.length) d+=`<div class="note info">记录里还没有她的回复。先拿到她的反馈，再谈下一步动作——盲推是最常见的死法。</div>`;
+  needCheck(attr,needs,vt).forEach(n=>d+=`<div class="note ${n.lv}"><b>${n.lv==="ok"?"匹配":"风险"}：</b>${n.t}</div>`);
+  if(curStep>=5 && iiv<2) d+=`<div class="note bad"><b>越级预警：</b>兴趣指标还没到中级就做模糊测试／破废测，等于在没建立吸引力的时候谈关系，必然被反抗。</div>`;
+  if(curStep>=9 && attr!=="ab" && !last.match(/性|生理|窗口/)) d+=`<div class="note warn"><b>顺序提醒：</b>释放张力必须建立在「称呼已确定」之后。没有称呼直接聊性，对方不会敞开聊。</div>`;
+  if(attr==="ab" && curStep>=6) d+=`<div class="note bad"><b>供养者红线：</b>她是 AB 属性，一旦你开始花钱/送东西，框架立刻转到供养者。钱是给女生看的，不是给女生花的。</div>`;
+  $("diag").innerHTML=d;
+
+  // 回复
+  const reps=gen(curStep,attr,needs,K,last,iiv,vt);
+  lastReps=reps;
+  $("out").innerHTML=`<div class="note info"><b>当前步骤：</b>STEP ${curStep} ${STEPS[curStep].k}　<b>属性：</b>${{cd:"CD长期",ab:"AB短期",unknown:"未判断"}[attr]}<b>兴趣指标：</b>$["无","初级","中级","高级"][iiv]}</div>`+
+   `<div class="reps">`+reps.map(r=>`<div class="rep"><button class="act">复制</button><div class="txt">${r.t}</div><div class="why"><b>原理：</b>${r.w}</div></div>`).join("")+`</div>`;
+  document.querySelectorAll(".rep .act").forEach(b=>b.onclick=()=>{
+    const txt=b.parentNode.querySelector(".txt").textContent;
+    navigator.clipboard.writeText(txt).then(()=>{b.textContent="已复制";setTimeout(()=>b.textContent="复制",1200);});
+  });
+
+  // 关键词
+  if(K.length){
+    const k0=K[0],k1=K[1]||"这个";
+    $("kw").innerHTML=`<div class="chips">${K.map(x=>`<span class="chip" data-k="${x}">${x}</span>`).join("")}</div>
+    <div class="sec-t">沿关键词本身延伸</div>
+    <div class="reps">
+      <div class="rep"><div class="txt">那${k0}你是怎么开始的？</div><div class="why"><b>原理：</b>追源头，把话题往深里推，防止她只答一句。</div></div>
+      <div class="rep"><div class="txt">${k0}这件事上，你有什么我应该知道的？</div><div class="why"><b>原理：</b>开放式提问，比是非题容易接话。</div></div>
+    </div>
+    <div class="sec-t">从「我」延伸</div>
+    <div class="reps">
+      <div class="rep"><div class="txt">我最近也迷上${k0}了，不过一直是一个人，没什么意思。</div><div class="why"><b>原理：</b>自我暴露 + 埋下邀约伏笔，同时给她一个接话的理由。</div></div>
+    </div>
+    <div class="sec-t">沿时间线延伸</div>
+    <div class="reps">
+      <div class="rep"><div class="txt">这个季度${k0}挺不错的，你打算什么时候再来一次？</div><div class="why"><b>原理：</b>把话题推向未来，天然创造下一次联系接口——为窗口期邀约做准备。</div></div>
+    </div>`;
+    document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{$("draft").value+=c.dataset.k;lint();});
+  } else {
+    $("kw").innerHTML=`<div style="color:var(--ink3);font-size:13px">她还没回话，暂无关键词可提取。等她回复后，这里会自动给出延伸方向。</div>`;
+  }
+}
+
+function paintMeter(v,r){
+  const m=$("meter").children;
+  for(let i=0;i<4;i++){ m[i].className = i<v?"on":(i===v?"cur":""); }
+  $("meterTxt").textContent="兴趣动能："+["无 · 只答不接","初级 · 描述状态","中级 · 描述+解释","高级 · 描述+反问"][v];
+}
+
+/* 模糊测试 */
+const FUZZ=[
+ "感觉你比较适合做媳妇儿。",
+ "你适合做媳妇。",
+ "你适合做我媳妇。",
+ "你做我媳妇吧。"
+];
+const FZW=[
+ "最模糊。「感觉」把意图包起来，她可以当玩笑接，也可以认真接。你完全没有暴露需求。",
+ "去掉「我」，把自己的位置藏起来了，但判断更明确。仍然可进可退。",
+ "「我」暴露了一部分需求感。只在你已判定她为高级吸引动能时才用这一级。",
+ "需求感最足。绝对不要拿这一句当测试用——这是表态，不是测试，说出去就收不回来。"
+];
+function paintFuzz(){
+  const i=+$("fuzz").value-1;
+  const lv=i<2?"ok":(i===2?"warn":"bad");
+  $("fuzzOut").className="note "+lv;
+  $("fuzzOut").innerHTML=`<b>第${i+1}级：</b>${FUZZ[i]}<br><span style="opacity:.85">${FZW[i]}</span>`;
+}
+$("fuzz").oninput=paintFuzz; paintFuzz();
+
+/* 废物测试表 */
+const WASTE=[
+ ["我跟你在一起之后，你会不会出去乱搞","<span class='bad'>我身边女生很多</span> / <span class='bad'>我身边没有异性朋友</span>","前者的女生觉得你花心，后者觉得你没价值、不受女生喜欢——两个都是错的。","长期→往内在答：身边异性朋友不少，但真要找能走远的，我更看重感觉对不对。短期→往标准答：不是没有，是很难找到真正心动的。"],
+ ["你是不是只是想睡我","<span class='bad'>反问：你很缺人陪你吗</span>","反问等于承认，你会被直接归到短期。","不要辩解，直接反向：把话题拉回她的真实顾虑，比如「你觉得我像那样的人吗」。"],
+ ["你谈过几个对象","<span class='bad'>报一个夸张的数字</span>","数字一大就假，一拆穿全盘崩塌。","如实说，但带框架：「认真谈的不多。我更看重的是对不对，不是多不多。」"],
+ ["你能保证不抽烟不喝酒吗","<span class='bad'>全盘答应，实际做不到</span>","废测就是验证你前面展示的价值是不是真的。","只承诺你真能做到的那部分，做不到的直接说「这条我做不到」。她要的是真话。"],
+ ["你跟异性朋友关系好吗","<span class='bad'>说自己一个异性朋友都没有</span>","这等于承认你没价值。","承认有朋友，但定住边界：「有，但都清楚边界。我不想为了你表演没有朋友。」"],
+ ["你为什么不主动找我","<span class='bad'>秒回式道歉：对不起我错了</span>","需求感瞬间爆棚，她会立刻抽身后退。","把球踢回去：「我以为你挺忙的。你找我的时候，我秒回。」"]
+];
+$("waste").innerHTML="<thead><tr><th>她的废测</th><th>错误应对</th><th>为什么错</th><th>正确拆解</th></tr></thead><tbody>"+
+ WASTE.map(r=>`<tr><td>${r[0]}</td><td class="bad">${r[1]}</td><td>${r[2]}</td><td class="ok">${r[3]}</td></tr>`).join("")+"</tbody>";
+
+/* 红线自查 */
+const RULES=[
+ [/(我爱你|我喜欢你|做我女朋友|做我老婆|娶你|我娶你)/,"需求感爆棚","模糊测试以上的话术都靠隐藏「我」。这句话一出口，你在对方眼里就从「有标准」变成「很饥渴」。"],
+ [/(给你买|送你|转账|给你发红包|充值|充钱|请你吃|我请客.*贵)/,"供养者框架","钱是给女生看的，不是给女生花的。花了钱框架就转到供养者，她会开始算计你怎么让她花更多。"],
+ [/(约炮|睡|上床|开房|滚床单)/,"过早暴露","释放性张力必须建立在称呼已确定之后。没有称呼就聊性，对方不会敞开聊这条线。"],
+ [/(你真漂亮|你好好看|你太美了|美女你)/,"舔狗行为","开场不要先夸。一来就夸＝需求感外露，后面基本没戏。夸客观特征，别夸性格。"],
+ [/(我在上海.*我家有|我有房有车|我存款|我年薪|月薪.*万)/,"价值错配展示方式","不是不能展示物质，是不能用炫的方式。直接给＝供养者，展示能力＝吸引力。"],
+ [/(我最好了|我最帅|我最厉害|没有比我)/,"绝对化","绝对化表述会触发反向废测。框架感来自稳定，不是来自夸大。"],
+ [/(我今天必须|你今天必须|必须出来|马上见面)/,"强势压迫","你自己不上班吗「今天一定要今天」。窗口期要卡，但语气要松弛。"],
+ [/(宝贝|老公|宝宝)/,"称呼错位","关系浅叫宝贝，关系深叫老公。层次不够就叫老公，是无效定位。"],
+ [/[。，、！]{2,}|。{3,}/,"语气过重","句子太长会显得用力。短句、留白，才有余地。"]
+];
+function lint(){
+  const t=$("draft").value.trim();
+  if(!t){$("lint").innerHTML=`<div class="note info">粘一段你打算发的话，这里会自动扫红线。</div>`;return;}
+  const hit=RULES.filter(r=>r[0].test(t));
+  if(!hit.length){$("lint").innerHTML=`<div class="note ok"><b>未检出红线。</b>可以发。发之前再读一遍：这句话里有没有把「我」藏起来？</div>`;return;}
+  $("lint").innerHTML=hit.map(r=>`<div class="note bad"><b>${r[1]}：</b>${r[2]}</div>`).join("");
+}
+$("draft").oninput=lint; lint();
+
+/* 按钮 */
+$("go").onclick=run;
+$("cl").onclick=()=>{ $("chat").value=""; $("draft").value=""; run(); lint(); };
+$("ex").onclick=()=>{ $("chat").value=`我: 也喜欢旅行啊，你都去过哪些地方？
+她: 我去过云南洱海，还挺漂亮的
+她: 你呢`; run(); };
+$("cp").onclick=()=>{
+  const txt=[...document.querySelectorAll(".rep .txt")].map(e=>e.textContent).join("\n\n");
+  navigator.clipboard.writeText("【STEP "+curStep+" 回复方案】\n"+txt).then(()=>{
+    $("cp").textContent="已复制"; setTimeout(()=>$("cp").textContent="复制全部",1200);
+  });
+};
+document.querySelectorAll('#need input').forEach(c=>c.onchange=run);
+document.querySelectorAll('#vtype input').forEach(c=>c.onchange=run);
+document.querySelectorAll('#iit input').forEach(c=>c.onchange=e=>{
+  paintMeter(+c.value); run();
+});
+$("attr").onchange=run;
+
+/* ============ PWA ============ */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+if(window.matchMedia("(display-mode: standalone)").matches || navigator.standalone){document.body.classList.add("pwa");}
+
+const navBtns=[...document.querySelectorAll("#nav button")];
+function goSec(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const y=el.getBoundingClientRect().top+window.pageYOffset-58;
+  window.scrollTo({top:y,behavior:"smooth"});
+}
+navBtns.forEach(b=>b.onclick=()=>{goSec(b.dataset.t);paintNav(b.dataset.t);});
+function paintNav(active){
+  navBtns.forEach(b=>b.classList.toggle("on",b.dataset.t===active));
+}
+if("IntersectionObserver" in window){
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting) paintNav(e.target.id); });
+  },{rootMargin:"-60px 0px -70% 0px",threshold:0});
+  document.querySelectorAll(".card[id]").forEach(c=>io.observe(c));
+}
+paintNav("sec-chat");
+
+/* iOS 阻止双击缩放 */
+let lastTouch=0;
+document.addEventListener("touchend",e=>{
+  const now=Date.now();
+  if(now-lastTouch<300) e.preventDefault();
+  lastTouch=now;
+},{passive:false});
+</script>
+</body>
+</html>
